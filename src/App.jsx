@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import MovieCard from "./Moviecard";
 import SearchIcon from "./search.svg";
 import tmdb from "./tmdb";
@@ -10,29 +10,36 @@ function App() {
   const [movies, setMovie] = useState([]);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState("popular");
+  const effectRan = useRef(false);
 
   const [isActive, setActive] = useState(false);
 
-  function handleClickpop() {
-    setPage("popular");
-    setActive(false);
-    console.log(page);
-  }
 
   function handleClicktop() {
     setPage("top_rated");
     setActive(true);
+    effectRan.current = false;
     console.log(page);
   }
+    function handleClickpop() {
+        setPage("popular");
+        setActive(false);
+        effectRan.current = false;
+        console.log(page);
+    }
 
   useEffect(() => {
-    const fetchMovies = async () => {
-      const { data } = await tmdb.get(`movie/${page}`);
-      setMovie(data.results);
-    };
-    fetchMovies();
-
-  });
+    if(effectRan.current === true) {
+        const fetchMovies = async () => {
+            const {data} = await tmdb.get(`movie/${page}`);
+            setMovie(data.results);
+        };
+        fetchMovies();
+    }
+        return () => {
+            effectRan.current = true;
+        }
+  }, [page]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -40,6 +47,10 @@ function App() {
     fetch(API_search + search)
         .then((res) => res.json())
         .then((data) => setMovie(data.results));
+
+    return () => {
+        effectRan.current=false;
+    }
   };
 
   const date = new Date().getFullYear();
